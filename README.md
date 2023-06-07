@@ -32,6 +32,18 @@ open src/index.html
 Then open developer mode and read the console log,  manually delete a pod and watch the websocket update
 
 
+```bash
+/namespaces
+/pods
+/pods/{ns}
+/deletePod/{ns}/{pname}
+
+websocket handlers for realtime updates
+/ws/pods
+/ws/namespaces
+```
+
+
 ## Build the image
 First build the image and store in our local 
 

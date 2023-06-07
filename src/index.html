@@ -7,7 +7,7 @@
   </head>
   <body>
 	<script>
-        let socket = new WebSocket("ws://localhost:8080/ws/pods")
+        let socket = new WebSocket("ws://localhost:8080/ws/namespaces")
         console.log("Attempting Websocket connection")
 
         socket.onopen = () => {

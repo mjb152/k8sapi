@@ -167,7 +167,8 @@ func podReader(conn *websocket.Conn) {
 		AddFunc: func(obj interface{}) { // register add Handler
 			mObj, ok := obj.(*corev1.Pod)
 			if !ok {
-				log.Panic("Not a Pod added")
+				log.Println("Not a Pod added")
+				return
 			}
 			pStatus := getPodStatus(mObj)
 
@@ -178,7 +179,8 @@ func podReader(conn *websocket.Conn) {
 			oObj, ok := oldObj.(*corev1.Pod)
 			nObj, ok := newObj.(*corev1.Pod)
 			if !ok {
-				log.Panic("Not a Pod added")
+				log.Println("Not a Pod added")
+				return
 			}
 
 			// if we get a pod Running, but with 0/1 , we don't detect that.
@@ -194,7 +196,8 @@ func podReader(conn *websocket.Conn) {
 		DeleteFunc: func(obj interface{}) { // register delete Handler
 			mObj, ok := obj.(*corev1.Pod)
 			if !ok {
-				log.Panic("Not a Pod added")
+				log.Println("Not a Pod added")
+				return
 			}
 
 			json := createPodJson("delete", mObj.Name, mObj.Namespace, "deleted")
@@ -231,7 +234,8 @@ func nsReader(conn *websocket.Conn) {
 		AddFunc: func(obj interface{}) { // register add Handler
 			mObj, ok := obj.(*corev1.Namespace)
 			if !ok {
-				log.Panic("Not a Pod added")
+				log.Println("Not a Pod added")
+				return
 			}
 
 			json := createNSJson("add", mObj.Name)
@@ -241,7 +245,8 @@ func nsReader(conn *websocket.Conn) {
 			oObj, ok := oldObj.(*corev1.Namespace)
 			nObj, ok := newObj.(*corev1.Namespace)
 			if !ok {
-				log.Panic("Not a Namespace added")
+				log.Printf("Not a Namespace added - updated %v %v\n", oObj, nObj)
+				return
 			}
 
 			// if we get a pod Running, but with 0/1 , we don't detect that.
@@ -258,7 +263,8 @@ func nsReader(conn *websocket.Conn) {
 		DeleteFunc: func(obj interface{}) { // register delete Handler
 			mObj, ok := obj.(*corev1.Namespace)
 			if !ok {
-				log.Panic("Not a Namespace added")
+				log.Printf("Not a Namespace added - deleted %v\n", mObj)
+				return
 			}
 
 			json := createNSJson("delete", mObj.Name)
