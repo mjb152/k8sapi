@@ -42,6 +42,7 @@ type Namespace struct {
 type Pod struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	ID        string `json:"id"`
 	Status    string `json:"status"`
 	Action    string `json:"action"`
 }
@@ -103,11 +104,12 @@ func getNamespaces(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResp)
 }
 
-func createPodJson(action, name, ns, status string) []byte {
+func createPodJson(action, name, ns, id, status string) []byte {
 	newPod := Pod{
 		Action:    action,
 		Name:      name,
 		Namespace: ns,
+		ID:        id,
 		Status:    status,
 	}
 	jsonMsg, err := json.Marshal(newPod)
@@ -171,8 +173,7 @@ func podReader(conn *websocket.Conn) {
 				return
 			}
 			pStatus := getPodStatus(mObj)
-
-			json := createPodJson("add", mObj.Name, mObj.Namespace, pStatus)
+			json := createPodJson("add", mObj.Name, mObj.Namespace, mObj.uid, pStatus)
 			send_WS(conn, json)
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) { // register update Handler
@@ -190,7 +191,7 @@ func podReader(conn *websocket.Conn) {
 			pStatus = getPodStatus(nObj)
 
 			//XX DO WE NEED TO CHANGE FROM ADD TO UPDATE ?
-			json := createPodJson("add", nObj.Name, nObj.Namespace, pStatus)
+			json := createPodJson("add", nObj.Name, nObj.Namespace, nObj.Id, pStatus)
 			send_WS(conn, json)
 		},
 		DeleteFunc: func(obj interface{}) { // register delete Handler
@@ -200,7 +201,7 @@ func podReader(conn *websocket.Conn) {
 				return
 			}
 
-			json := createPodJson("delete", mObj.Name, mObj.Namespace, "deleted")
+			json := createPodJson("delete", mObj.Name, mObj.Namespace, mObj.ID, "deleted")
 			send_WS(conn, json)
 		},
 	})
@@ -321,6 +322,7 @@ func getPods(w http.ResponseWriter, r *http.Request) {
 		podItem := Pod{
 			Name:      pod.Name,
 			Namespace: pod.Namespace,
+			ID:        pod.ID,
 			Status:    getPodStatus(&pod),
 			Action:    "add",
 		}

@@ -21,7 +21,7 @@ metadata:
     app: k8sapi
   name: k8sapi
 spec:
-  replicas: 3
+  replicas: 10
   selector:
     matchLabels:
       app: k8sapi

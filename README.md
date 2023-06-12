@@ -7,8 +7,8 @@ Rancher should be setup to run Kubernetes, and dockerd(moby) Container Runtime
 ### 0-60 in 10 seconds
 ``` bash
 kind create cluster --name dev1-cluster
-docker build -t k8sapi:1.3 .
-kind load docker-image k8sapi:1.3 --name dev1-cluster
+docker build -t k8sapi:1.4 .
+kind load docker-image k8sapi:1.4 --name dev1-cluster
 kubectl apply -f k8s/rbac.yaml
 kubectl apply -f k8s/svc-deploy.yaml
 
