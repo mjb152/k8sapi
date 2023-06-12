@@ -172,8 +172,12 @@ func podReader(conn *websocket.Conn) {
 				log.Println("Not a Pod added")
 				return
 			}
+
+			uid := string(mObj.ObjectMeta.GetUID())
+
 			pStatus := getPodStatus(mObj)
-			json := createPodJson("add", mObj.Name, mObj.Namespace, mObj.uid, pStatus)
+			json := createPodJson("add", mObj.Name, mObj.Namespace, uid, pStatus)
+
 			send_WS(conn, json)
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) { // register update Handler
@@ -184,6 +188,8 @@ func podReader(conn *websocket.Conn) {
 				return
 			}
 
+			uid := string(nObj.ObjectMeta.GetUID())
+
 			// if we get a pod Running, but with 0/1 , we don't detect that.
 
 			pStatus := getPodStatus(oObj)
@@ -191,7 +197,7 @@ func podReader(conn *websocket.Conn) {
 			pStatus = getPodStatus(nObj)
 
 			//XX DO WE NEED TO CHANGE FROM ADD TO UPDATE ?
-			json := createPodJson("add", nObj.Name, nObj.Namespace, nObj.Id, pStatus)
+			json := createPodJson("add", nObj.Name, nObj.Namespace, uid, pStatus)
 			send_WS(conn, json)
 		},
 		DeleteFunc: func(obj interface{}) { // register delete Handler
@@ -201,7 +207,9 @@ func podReader(conn *websocket.Conn) {
 				return
 			}
 
-			json := createPodJson("delete", mObj.Name, mObj.Namespace, mObj.ID, "deleted")
+			uid := string(mObj.ObjectMeta.GetUID())
+
+			json := createPodJson("delete", mObj.Name, mObj.Namespace, uid, "deleted")
 			send_WS(conn, json)
 		},
 	})
@@ -322,7 +330,7 @@ func getPods(w http.ResponseWriter, r *http.Request) {
 		podItem := Pod{
 			Name:      pod.Name,
 			Namespace: pod.Namespace,
-			ID:        pod.ID,
+			ID:        "pod.ID",
 			Status:    getPodStatus(&pod),
 			Action:    "add",
 		}
