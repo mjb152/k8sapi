@@ -104,35 +104,36 @@ func getNamespaces(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResp)
 }
 
-func createPodJson(action, name, ns, id, status string) []byte {
-	newPod := Pod{
-		Action:    action,
-		Name:      name,
-		Namespace: ns,
-		ID:        id,
-		Status:    status,
-	}
-	jsonMsg, err := json.Marshal(newPod)
-	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-	}
+// func createPodJson(action, name, ns, id, status string) []byte {
+// 	newPod := Pod{
+// 		Action:    action,
+// 		Name:      name,
+// 		Namespace: ns,
+// 		ID:        id,
+// 		Status:    status,
+// 	}
+// 	jsonMsg, err := json.Marshal(newPod)
+// 	if err != nil {
+// 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+// 	}
 
-	return jsonMsg
-}
+// 	return jsonMsg
+// }
 
-func createNSJson(action, name string) []byte {
-	newNS := Namespace{
-		Action: action,
-		Name:   name,
-	}
-	jsonMsg, err := json.Marshal(newNS)
-	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-	}
-	fmt.Printf("\tWS Sent %s\n", jsonMsg)
-	return jsonMsg
-}
+// func createNSJson(action, name string) []byte {
+// 	newNS := Namespace{
+// 		Action: action,
+// 		Name:   name,
+// 	}
+// 	jsonMsg, err := json.Marshal(newNS)
+// 	if err != nil {
+// 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+// 	}
+// 	fmt.Printf("\tWS Sent %s\n", jsonMsg)
+// 	return jsonMsg
+// }
 
+// Send a websocket message
 func send_WS(conn *websocket.Conn, json []byte) {
 	messageType := 1
 
@@ -140,7 +141,6 @@ func send_WS(conn *websocket.Conn, json []byte) {
 		log.Println(err)
 		return
 	}
-	//fmt.Println("WS sent ", json)
 }
 
 func podReader(conn *websocket.Conn) {
@@ -177,7 +177,6 @@ func podReader(conn *websocket.Conn) {
 
 			pStatus := getPodStatus(mObj)
 			json := createPodJson("add", mObj.Name, mObj.Namespace, uid, pStatus)
-
 			send_WS(conn, json)
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) { // register update Handler
@@ -285,7 +284,7 @@ func nsReader(conn *websocket.Conn) {
 }
 
 /*
-Returns a json object listing Pods,  specify "ns" to limit the list to a Namespace
+opens a websocket for Pod events, then calls podReader to subscribe to the informer events
 */
 func wsGetPods(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -299,7 +298,7 @@ func wsGetPods(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-Returns a json object listing Namespaces
+opens a websocket for NS events, then calls nsReader to subscribe to the informer events
 */
 func wsNsPods(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -346,6 +345,9 @@ func getPods(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResp)
 }
 
+/*
+interrogates a Pod object to get more information about its status, is it running, not running etc
+*/
 func getPodStatus(pod *corev1.Pod) string {
 	restarts := 0
 	//totalContainers := len(pod.Spec.Containers)
@@ -355,14 +357,6 @@ func getPodStatus(pod *corev1.Pod) string {
 	if pod.Status.Reason != "" {
 		reason = pod.Status.Reason
 	}
-	//fmt.Printf("XX %s - Pod (start) Name(%s) REASON %s\n",someText, pod.Name,reason)
-
-	// switch pod.Status.Phase {
-	// case corev1.PodSucceeded:
-	// 	fmt.Printf("XXXX Pod Succeeded %s\n",corev1.podSuccessConditions)
-	// case corev1.PodFailed:
-	// 	fmt.Printf("XXXX Pod Failed %s\n",corev1.podFailedConditions)
-	// }
 
 	initializing := false
 	for i := range pod.Status.InitContainerStatuses {
@@ -433,6 +427,9 @@ func getPodStatus(pod *corev1.Pod) string {
 	return reason
 }
 
+/*
+Check whether a Pod is ready or not
+*/
 func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
 	for _, condition := range conditions {
 		if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
@@ -443,7 +440,7 @@ func hasPodReadyCondition(conditions []corev1.PodCondition) bool {
 }
 
 /*
-Delete a Pod in a specific Namespace,  "ns" and "pname" are required
+Delete a Pod in a specific Namespace,  request "ns" and "pname" are required
 */
 func deletePod(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
